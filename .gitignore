@@ -1,0 +1,5 @@
+tmp/
+*.o
+bin/pukhlyna.exe
+.vscode/
+error.txt
