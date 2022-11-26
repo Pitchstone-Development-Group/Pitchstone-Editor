@@ -1,5 +1,7 @@
 tmp/
 *.o
-bin/pukhlyna.exe
+bin/test/
+bin/pitchstone.exe
+bin/pitchstone
 .vscode/
 error.txt
