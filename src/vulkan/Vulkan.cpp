@@ -76,10 +76,10 @@ Vulkan::Vulkan(bool validator) {
 
 	VkApplicationInfo info_a{};
 	info_a.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	info_a.pApplicationName = "Hello Triangle";
-	info_a.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	info_a.pEngineName = "No Engine";
-	info_a.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	info_a.pApplicationName = "Pitchstone Editor";
+	info_a.applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
+	info_a.pEngineName = "Pitchstone";
+	info_a.engineVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
 	info_a.apiVersion = VK_API_VERSION_1_0;
 
 	VkInstanceCreateInfo info_c{};

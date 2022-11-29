@@ -5,6 +5,6 @@
 
 class Texture {
 	Texture(VkDevice device, VkCommandPool pool, int width, int height);
-}
+};
 
 #endif

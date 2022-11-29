@@ -4,11 +4,9 @@
 #include <stdint.h>
 #include <math.h>
 #include <iostream>
+
 extern "C" {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include <libavcodec/avcodec.h>
-#pragma GCC diagnostic pop
 }
 
 static int64_t gcd(int64_t a, int64_t b) {

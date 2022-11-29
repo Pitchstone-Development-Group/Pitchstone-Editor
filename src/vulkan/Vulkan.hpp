@@ -10,8 +10,8 @@ public:
 	virtual ~Vulkan();
 
 	bool validates() { return validation; }
-private:
 	VkInstance instance;
+private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 	bool validation;
 };
