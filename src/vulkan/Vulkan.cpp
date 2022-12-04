@@ -3,10 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <cstring>
 
-static const std::vector<const char*> validationLayers = {
-	"VK_LAYER_KHRONOS_validation"
-};
-
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 	return VK_FALSE;
@@ -31,7 +27,7 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 		func(instance, debugMessenger, pAllocator);
 }
 
-static bool checkValidationLayerSupport() {
+static bool checkValidationLayerSupport(std::vector<const char*> validationLayers) {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -55,9 +51,13 @@ static bool checkValidationLayerSupport() {
 }
 
 static std::vector<const char*> getRequiredExtensions() {
+	if (!glfwVulkanSupported())
+		throw std::runtime_error("Vulkan loader and/or ICD not found!");
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	if (glfwExtensionCount == 0 || !glfwExtensions)
+		throw std::runtime_error("GLFW required extensions not available!");
 	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	return extensions;
@@ -65,13 +65,15 @@ static std::vector<const char*> getRequiredExtensions() {
 
 
 Vulkan::Vulkan(bool validator) {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	instance = VK_NULL_HANDLE;
 	debugMessenger = VK_NULL_HANDLE;
 	validation = validator;
 
 	std::cout << "Running Vulkan constructor" << std::endl;
 
-	if (validation && !checkValidationLayerSupport())
+	if (validation && !checkValidationLayerSupport(m_layers))
 		throw std::runtime_error("validation layers requested, but not available!");
 
 	VkApplicationInfo info_a{};
@@ -90,17 +92,13 @@ Vulkan::Vulkan(bool validator) {
 	info_c.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	info_c.ppEnabledExtensionNames = extensions.data();
 
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	
-	info_c.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-	info_c.ppEnabledLayerNames = validationLayers.data();
-
+	VkDebugUtilsMessengerCreateInfoEXT info_d{};
 
 	if (validation) {
-		info_c.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		info_c.ppEnabledLayerNames = validationLayers.data();
-		populateDebugMessengerCreateInfo(debugCreateInfo);
-		info_c.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
+		info_c.enabledLayerCount = static_cast<uint32_t>(m_layers.size());
+		info_c.ppEnabledLayerNames = m_layers.data();
+		populateDebugMessengerCreateInfo(info_d);
+		info_c.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &info_d;
 	} else {
 		info_c.enabledLayerCount = 0;
 		info_c.pNext = nullptr;
@@ -110,10 +108,10 @@ Vulkan::Vulkan(bool validator) {
 		throw std::runtime_error("failed to create instance!");
 
 	if (validation) {
-		VkDebugUtilsMessengerCreateInfoEXT info_d;
-		populateDebugMessengerCreateInfo(info_d);
+		VkDebugUtilsMessengerCreateInfoEXT info_D;
+		populateDebugMessengerCreateInfo(info_D);
 
-		if (CreateDebugUtilsMessengerEXT(instance, &info_d, nullptr, &debugMessenger) != VK_SUCCESS)
+		if (CreateDebugUtilsMessengerEXT(instance, &info_D, nullptr, &debugMessenger) != VK_SUCCESS)
 			throw std::runtime_error("failed to set up debug messenger!");
 	}
 	std::cout << "Finished Vulkan constructor" << std::endl;
@@ -123,5 +121,6 @@ Vulkan::~Vulkan() {
 	std::cout << "Running Vulkan destructor" << std::endl;
 	DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	vkDestroyInstance(instance, nullptr);
+	glfwTerminate();
 	std::cout << "Finished Vulkan destructor" << std::endl;
 }

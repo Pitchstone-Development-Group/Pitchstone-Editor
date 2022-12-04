@@ -2,25 +2,20 @@
 #define PITCHSTONE_VULKAN_QUEUEMANAGER
 
 #include <vulkan/vulkan.h>
-#include <vulkan.hpp>
+#include <vector>
+#include <map>
 #include <mutex>
+#include "Queue.hpp"
 
 class QueueManager {
 public:
-    QueueManager(VkInstance instance, int queues);
-    virtual ~QueueManager();
-
-    size_t queueSize() { return queues.size(); }
-    void lock() { mutex.lock(); }
-    void unlock() { mutex.unlock(); }
-
-    VkQueueFamilyProperties getFamily(int i);
-    VkQueue getQueue(int index);
-    VkQueue getQueue(int family, int index);
+	QueueManager(VkPhysicalDevice physical, VkSurfaceKHR surface);
+	virtual ~QueueManager();
+	Queue* getQueue(int i) { return m_queues[m_qindex[i]]; }
+	std::vector<uint32_t> m_count;
 private:
-    std::mutex mutex;
-    std::vector<VkQueueFamilyProperties> props;
-    std::vector<VkQueue> queues;
+	uint32_t m_qindex[4];
+	std::vector<Queue*> m_queues;
 };
 
 #endif

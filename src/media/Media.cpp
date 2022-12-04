@@ -25,11 +25,11 @@ Media::~Media() {
  */
 MediaCache* Media::get(uint32_t index, float time) {
     if (index >= streams)
-        return NULL;
+        return nullptr;
     // Prevents race conditioning and basic counting problems
     mutex.lock();
 
-    MediaCache *media = NULL;
+    MediaCache *media = nullptr;
 
     for (MediaCache *mc : cache[index]) {
         // It is an closed-open interval to prevent ambiguity
@@ -156,7 +156,7 @@ Media* MediaBin::link(std::string fname, uint32_t streams) {
     std::filesystem::path p = std::filesystem::absolute(fname);
     mutex.lock();
     std::pair<std::string, Media*> pair;
-    Media *media = NULL;
+    Media *media = nullptr;
     for (auto kv : bin) {
         if (kv.first == p) {
             media = kv.second;

@@ -4,7 +4,9 @@
 #include "../sys/rational.hpp"
 
 class Rectangle {
+public:
 	Rectangle();
+	
 };
 
 #endif

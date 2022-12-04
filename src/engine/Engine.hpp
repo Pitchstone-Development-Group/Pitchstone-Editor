@@ -2,6 +2,7 @@
 #define PITCHSTONE_ENGINE_ENGINE
 
 #include <mutex>
+#include <vector>
 #include <vulkan/vulkan.h>
 #include "../vulkan/Texture.hpp"
 #include "../vulkan/Framebuffer.hpp"
@@ -29,7 +30,7 @@ public:
 	VkCommandPool m_pool;
 	std::vector<VkCommandBuffer> m_buffers;
 	std::vector<VkFence> m_fences;
-	Rectangle m_rectangle;
+	Rectangle* m_rectangle;
 
 	/* Temporary information, as they should belong in the filter node class */
 	std::vector<VkSemaphore> m_semaphore;

@@ -4,7 +4,14 @@
 #include <vulkan/vulkan.h>
 
 class Texture {
-	Texture(VkDevice device, VkCommandPool pool, int width, int height);
+public:
+	Texture(VkDevice device, int width, int height);
+	virtual ~Texture();
+private:
+	VkImage image;
+	VkImageView view;
+	VkSampler sampler;
+	VkDeviceMemory memory;
 };
 
 #endif
