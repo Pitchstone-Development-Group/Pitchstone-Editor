@@ -1,9 +1,14 @@
 #include "vulkan/Vulkan.hpp"
+#include "sys/rational.hpp"
+#include "sys/Application.hpp"
+#include <iostream>
+
+#include <glm/glm.hpp>
+#include <cpuid.h>
 
 int main(int argc, char *argv[]) {
-	/* Disable validation, ensure Vulkan DSK is installed before setting to true */
-	Vulkan *vulkan = new Vulkan(true);
+	Application *app = new Application();
 
-	delete vulkan;
+	delete app;
 	return 0;
 }

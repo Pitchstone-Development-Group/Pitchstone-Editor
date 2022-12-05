@@ -1,5 +1,5 @@
-#ifndef OBSIDIAN_VULKAN_VULKAN
-#define OBSIDIAN_VULKAN_VULKAN
+#ifndef PITCHSTONE_VULKAN_VULKAN
+#define PITCHSTONE_VULKAN_VULKAN
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -10,8 +10,9 @@ public:
 	virtual ~Vulkan();
 
 	bool validates() { return validation; }
-private:
 	VkInstance instance;
+	std::vector<const char*> m_layers = { "VK_LAYER_KHRONOS_validation" };
+private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 	bool validation;
 };
