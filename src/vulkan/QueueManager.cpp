@@ -7,9 +7,9 @@
 /* Stores the support for present, graphics, and compute for each family as well as queue count and occupied */
 struct qf_capabilities {
 	int p, g, c, q, o;
-	qf_capabilities() { p = g = c = q = o = 0; }
+	qf_capabilities() noexcept { p = g = c = q = o = 0; }
 	qf_capabilities(int _p, int _g, int _c, int _q) { p = _p, g = _g, c = _c, q = _q, o = 0; }
-	qf_capabilities(const qf_capabilities& k) { p = k.p, g = k.g, c = k.c, q = k.q, o = k.o; } 
+	qf_capabilities(const qf_capabilities& k) noexcept { p = k.p, g = k.g, c = k.c, q = k.q, o = k.o; } 
 	bool operator==(const qf_capabilities& k) { return p == k.p && g == k.g && c == k.c; }
 };
 
