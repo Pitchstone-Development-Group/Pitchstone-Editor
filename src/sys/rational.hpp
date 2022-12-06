@@ -32,8 +32,8 @@ struct rational {
     rational operator =(const AVRational& q) {n = q.num; d = q.den; return *this; }
     rational operator -() { n = -n; return *this; }
     rational operator ~() { if (n == 0) d = 1; else if (d == 0) n = 1; else { int64_t g = gcd(abs(n), abs(d)); n = sgn(n, d) / g; d = abs(d) / g; } return *this; }
-    operator float() const { return (float)n / d; }
-    operator double() const { return (double)n / d; }
+    float  F() { return (float)n / d; }
+    double D() { return (double)n / d; }
 
     bool operator ==(const rational& q) {return n * q.d == d * q.n; }
     bool operator ==(const int64_t   i) {return n == d * i; }
