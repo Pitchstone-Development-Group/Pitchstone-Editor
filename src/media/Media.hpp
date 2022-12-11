@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <string>
 #include <stdint.h>
+#include "../sys/rational.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -27,7 +28,7 @@ enum MCFormat {
 
 struct MediaCache {
     enum MCFormat format;
-    float start, end;
+    rational start, end;
     union {
         AVFrame *av;
         struct {
@@ -46,9 +47,9 @@ public:
     Media(uint32_t indices);
     virtual ~Media();
 
-    MediaCache* get(uint32_t index, float time);
+    MediaCache* get(uint32_t index, rational time);
     MediaCache* link(uint32_t index, MediaCache*);
-    uint32_t unlink(uint32_t index, float before, float after);
+    uint32_t unlink(uint32_t index, rational before, rational after);
     int unlink(uint32_t index, MediaCache *media);
 private:
     void clean(MediaCache*);

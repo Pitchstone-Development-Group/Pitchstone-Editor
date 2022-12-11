@@ -15,6 +15,8 @@ public:
     void insert(rational a, rational b);
     //Check if domains list contains a superdomain of [a,b)
     bool has(rational a, rational b);
+
+    static bool intersects(rational a1, rational b1, rational a2, rational b2);
 //private:
     std::vector<std::pair<rational, rational>> domains;
 };

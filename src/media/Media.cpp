@@ -23,7 +23,7 @@ Media::~Media() {
  * they need is already in their bank before calling this again to
  * prevent memory leaks from happening.
  */
-MediaCache* Media::get(uint32_t index, float time) {
+MediaCache* Media::get(uint32_t index, rational time) {
     if (index >= streams)
         return nullptr;
     // Prevents race conditioning and basic counting problems
@@ -75,7 +75,7 @@ done:
  * space, if any cache's references hit zero, it is cleaned up and
  * removed from the list
  */
-uint32_t Media::unlink(uint32_t index, float before, float after) {
+uint32_t Media::unlink(uint32_t index, rational before, rational after) {
     if (index >= streams)
         return 0;
     mutex.lock();
