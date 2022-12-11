@@ -119,12 +119,8 @@ int Media::unlink(uint32_t index, MediaCache* media) {
     
 }
 
-static bool is_av(MediaCache *mc) {
-    return mc->format >= MC_AV_VISUAL && mc->format <= MC_AV_OTHER;
-}
-
 void Media::clean(MediaCache *mc) {
-    if (is_av(mc)) {
+    if (MC_IS_AV(mc)) {
         av_frame_free(&mc->u.av);
     } else {
         for (int i = 0; i < MC_DATA_SIZE; ++i) {

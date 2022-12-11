@@ -9,11 +9,17 @@ domain::~domain() {
 }
 
 bool domain::intersects(rational a1, rational b1, rational a2, rational b2) {
-    if (b1 == a2 || a1 == b2)
-        return true;
     if (a2 >= a1 && b1 >= a2)
         return true;
     if (a1 >= a2 && b2 >= a1)
+        return true;
+    return false;
+}
+
+bool domain::overlaps(rational a1, rational b1, rational a2, rational b2) {
+    if (a2 >= a1 && b1 > a2)
+        return true;
+    if (a1 >= a2 && b2 > a1)
         return true;
     return false;
 }

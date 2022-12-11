@@ -26,6 +26,8 @@ enum MCFormat {
 #define MC_META_SIZE 8
 #define MC_DATA_SIZE 4
 
+#define MC_IS_AV(mc) ((mc->format >= MC_AV_VISUAL) && (mc->format <= MC_AV_OTHER))
+
 struct MediaCache {
     enum MCFormat format;
     rational start, end;

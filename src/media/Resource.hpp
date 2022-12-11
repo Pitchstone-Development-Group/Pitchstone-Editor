@@ -20,6 +20,8 @@ enum PacketType {
 }; 
 
 struct ResourceStream {
+	ResourceStream();
+	ResourceStream(const ResourceStream& rs);
     AVStream* stream;
     AVCodecContext *context;
     MediaBank cache;
@@ -41,6 +43,14 @@ struct ResourceConfig {
     uint64_t *audioTracks;
 };
 
+/* For scraping and inserting cache */
+struct ResourceScraperConfig {
+	size_t countTracks;
+	uint64_t *tracks;
+	std::vector<int> rtracks;
+	rational start, end;
+};
+
 struct ResourceOutput {
     std::map<uint64_t, MediaBank> videoTracks;
     std::map<uint64_t, MediaBank> audioTracks;
@@ -53,10 +63,11 @@ public:
 
     void read(const ResourceConfig& config, ResourceOutput& bank);
 private:
+	void scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank);
+	bool renderPacket(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank, AVPacket* packet);
     rational ts2q(int64_t pts, int index);
     void seek(int64_t frame, rational fps);
     void batch(const ResourceConfig& config, ResourceOutput& bank);
-    MediaCache* cache(AVPacket *packet, AVFrame *frame);
 
     AVFormatContext *m_context;
 
