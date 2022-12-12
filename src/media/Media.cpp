@@ -61,6 +61,7 @@ MediaCache* Media::link(uint32_t index, MediaCache *media) {
         */
         if (mc->start == media->start && mc->end == media->end) {
             clean(media);
+			delete media;
             media = mc;
             goto done;
         }
@@ -108,8 +109,9 @@ int Media::unlink(uint32_t index, MediaCache* media) {
             cache[index][i]->refs--;
             if (cache[index][i] == 0) {
                 clean(mc);
+				delete mc;
                 ret = 1;
-                cache[index].erase(cache[index].begin() + i);
+                cache[index].erase(cache[index].begin() + (i--));
                 break;
             }
         }

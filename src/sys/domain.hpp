@@ -12,6 +12,7 @@ public:
     virtual ~domain();
 
 	domain operator=(const domain& d) { domains = d.domains; return *this; }
+	friend std::ostream& operator<<(std::ostream& os, const domain& d) { os << "{ "; for (auto r : d.domains) os << "[" << r.first << "," << r.second << ")"; os << " }"; return os; }
     
     inline void clear() { domains.clear(); }
     //Inserts continuous block [a,b)

@@ -17,9 +17,9 @@ bool domain::intersects(rational a1, rational b1, rational a2, rational b2) {
 }
 
 bool domain::overlaps(rational a1, rational b1, rational a2, rational b2) {
-    if (a2 >= a1 && b1 > a2)
+    if (a1 <= a2 && a2 < b1)
         return true;
-    if (a1 >= a2 && b2 > a1)
+    if (a2 <= a1 && a2 < b1)
         return true;
     return false;
 }
@@ -65,7 +65,7 @@ void domain::insert(rational a, rational b) {
 
 bool domain::has(rational a, rational b) {
     for (auto d : domains)
-        if (a <= d.first && d.second <= b)
+        if (d.first <= a && b <= d.second)
             return true;
     return false;
 }

@@ -62,12 +62,17 @@ public:
     virtual ~Resource();
 
     void read(const ResourceConfig& config, ResourceOutput& bank);
+
+	size_t numAudioTracks() { return m_atracks.size(); }
+	size_t numVideoTracks() { return m_vtracks.size(); }
+
 private:
 	void scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank);
 	bool renderPacket(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank, AVPacket* packet);
     rational ts2q(int64_t pts, int index);
     void seek(int64_t frame, rational fps);
     void batch(const ResourceConfig& config, ResourceOutput& bank);
+	bool batched();
 
     AVFormatContext *m_context;
 
@@ -76,8 +81,6 @@ private:
     std::vector<int> m_atracks; //Audial tracks
     std::vector<int> m_utracks; //Unknown tracks
 
-    bool batched();
-    /* Reason for supposed duplication of cache bank is for appropriate unlinking */
     Media *m_media;
 };
 

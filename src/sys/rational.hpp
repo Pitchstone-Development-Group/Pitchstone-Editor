@@ -64,7 +64,7 @@ struct rational {
     rational operator /=(const rational& q) { n = sgn(n, q.n) * q.d; d *= abs(q.n); return *this; }
     rational operator /=(const int64_t i) { d *= i; return *this; }
 
-    friend std::ostream& operator<<(std::ostream& os, const rational& q) { os << q.n << '/' << q.d; return os; }
+    friend std::ostream& operator<<(std::ostream& os, const rational& q) { os << q.n; if (q.n != 0 && q.d != 1) os << '/' << q.d; return os; }
 };
 
 #endif

@@ -26,19 +26,19 @@ Resource::Resource(const std::string& name, MediaBin& bin) {
 	const AVCodec *codec;
 	ResourceStream stream;
 
-	m_context = NULL;
-	ret = avformat_open_input(&m_context, name.c_str(), NULL, NULL);
+	m_context = nullptr;
+	ret = avformat_open_input(&m_context, name.c_str(), nullptr, nullptr);
 	if (ret < 0)
 		goto failure;
 
-	ret = avformat_find_stream_info(m_context, NULL);
+	ret = avformat_find_stream_info(m_context, nullptr);
 	if (ret < 0 || m_context->nb_streams == 0)
 		goto failure;
 
 	for (size_t i = 0; i < m_context->nb_streams; ++i) {
 		
 		codec = avcodec_find_decoder(m_context->streams[i]->codecpar->codec_id);
-		if (codec == NULL)
+		if (codec == nullptr)
 			goto failure;
 		
 		stream.stream = m_context->streams[i];
@@ -48,7 +48,7 @@ Resource::Resource(const std::string& name, MediaBin& bin) {
 		stream.lstart = stream.lend = -1;
 		avcodec_parameters_to_context(stream.context, stream.stream->codecpar);
 
-		ret = avcodec_open2(stream.context, codec, NULL);
+		ret = avcodec_open2(stream.context, codec, nullptr);
 		if (ret < 0)
 			goto failure;
 
@@ -76,8 +76,12 @@ failure:
 }
 
 Resource::~Resource() {
-	for (ResourceStream rs : m_tracks)
+	for (ResourceStream rs : m_tracks) {
+		for (MediaCache *mc : rs.cache)
+			m_media->unlink(rs.stream->index, mc);
+		rs.temp.cells.clear();
 		avcodec_free_context(&rs.context);
+	}
 
 	avformat_close_input(&m_context);
 }
@@ -89,8 +93,8 @@ void Resource::read(const ResourceConfig& config, ResourceOutput& banks) {
 	for (size_t i = 0; i < config.countVideoTracks; ++i)
 		banks.videoTracks[i].clear();
 	
-	rational start(config.frame * config.framesPerSecond.n, config.framesPerSecond.d);
-	rational end(config.frame * config.framesPerSecond.n + 1, config.framesPerSecond.d);
+	rational start(config.frame * config.framesPerSecond.d, config.framesPerSecond.n);
+	rational end(config.frame * config.framesPerSecond.d + 1, config.framesPerSecond.n);
 
 	for (ResourceStream& rs : m_tracks)
 		rs.temp.batched = true;
@@ -101,25 +105,34 @@ void Resource::read(const ResourceConfig& config, ResourceOutput& banks) {
 	scraper.countTracks = config.countVideoTracks, scraper.tracks = config.videoTracks, scraper.rtracks = m_vtracks;
 	scrapeCache(scraper, banks.audioTracks);
 	
-	// Seek if needed, then grab frames in batches
 	if (!batched()) {
 		if (config.seeked || config.direction == RESOURCE_PLAY_REVERSE)
 			seek(config.frame, config.framesPerSecond);
 		batch(config, banks);
 	}
 
-	rational cstart = (config.direction == RESOURCE_PLAY_FORWARD) ? rational(INT64_MIN) : start;
-	rational cend = (config.direction == RESOURCE_PLAY_FORWARD) ? end : rational(INT64_MAX);
+	
+	rational cstart = (config.direction == RESOURCE_PLAY_FORWARD) ? rational(INT32_MAX) : end;
+	rational cend = (config.direction == RESOURCE_PLAY_FORWARD) ? start : rational(INT32_MAX);
 
-	for (ResourceStream rs : m_tracks)
-		for (size_t i = 0; i < rs.cache.size(); ++i)
-			if (domain::overlaps(cstart, cend, rs.cache[i]->start, rs.cache[i]->end)) {
+	// Gets rid of uneeded cache, the media object will handle memory freeing of cache
+	for (ResourceStream& rs : m_tracks)
+		for (size_t i = 0; i < rs.cache.size(); ++i) {
+			bool remove = false;
+			if (config.direction == RESOURCE_PLAY_FORWARD && rs.cache[i]->end <= start)
+				remove = true;
+			if (config.direction == RESOURCE_PLAY_REVERSE && rs.cache[i]->start >= end)
+				remove = true;
+
+			if (remove) {
 				m_media->unlink((uint32_t)rs.stream->index, rs.cache[i]);
-				delete rs.cache[i];
 				rs.cache.erase(rs.cache.begin() + (i--));
 			}
+		}
+	
 }
 
+/* Search through all cache and grab frames and packets from intersecting time spans */
 void Resource::scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank) {
 	for (size_t i = 0; i < config.countTracks; ++i) {
 		ResourceStream& rs = m_tracks[config.rtracks[config.tracks[i]]];
@@ -133,6 +146,7 @@ void Resource::scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, Med
 	}
 }
 
+/* Checks if all tracks have their needed tracks */
 bool Resource::batched() {
 	for (ResourceStream rs : m_tracks)
 		if (!rs.temp.batched)
@@ -142,7 +156,7 @@ bool Resource::batched() {
 
 void Resource::seek(int64_t frame, rational fps) {
 	//First stream is usually rendered before all other streams of similar time
-	int64_t timestamp = (int64_t) ((frame * fps.n * m_context->streams[0]->time_base.den) / (fps.d * m_context->streams[0]->time_base.num));
+	int64_t timestamp = (int64_t) ((frame * fps.d * m_context->streams[0]->time_base.den) / (fps.n * m_context->streams[0]->time_base.num));
 	int ret = av_seek_frame(m_context, 0, timestamp, AVSEEK_FLAG_BACKWARD);
 	if (ret < 0)
 		std::cerr << "Frame seek failed: " << frame << ", " << fps << std::endl;
@@ -154,14 +168,13 @@ void Resource::batch(const ResourceConfig& config, ResourceOutput& output) {
 	int ret;
 
 	ResourceScraperConfig scraper;
-	scraper.start = rational(config.frame * config.framesPerSecond.n, config.framesPerSecond.d);
-	scraper.end = rational(config.frame * config.framesPerSecond.n + 1, config.framesPerSecond.d);
+	scraper.start = rational(config.frame * config.framesPerSecond.d, config.framesPerSecond.n);
+	scraper.end = rational(config.frame * config.framesPerSecond.d + 1, config.framesPerSecond.n);
 
 	do {
 		ret = av_read_frame(m_context, &packet);
-		if (ret == AVERROR_EOF)
-			break;
-		else if (ret < 0) {
+
+		if (ret < 0) {
 			std::cerr << "AV batch packet read error: " << ret << std::endl;
 			av_packet_unref(&packet);
 			break;
@@ -173,32 +186,33 @@ void Resource::batch(const ResourceConfig& config, ResourceOutput& output) {
 		scraper.countTracks = config.countVideoTracks, scraper.tracks = config.videoTracks, scraper.rtracks = m_vtracks;
 		if (renderPacket(scraper, output.videoTracks, &packet))
 			continue;
-
-	 } while (batched());
-	
-	av_packet_unref(&packet);
+		// Incase no family of tracks listens to it, to prevent memory leaks
+		av_packet_unref(&packet);
+	 } while (!batched());
 }
 
+/* Decodes frame from packet and inserts it to media cache for that track for future use
+ * Returns whether this was the right family of tracks for the packet
+ */
 bool Resource::renderPacket(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank, AVPacket* packet) {
 	MediaCache *mc;
 	rational pstart = ts2q(packet->pts, packet->stream_index);
 	rational pend = ts2q(packet->pts + packet->duration, packet->stream_index);
+	int ret, index = packet->stream_index;
+	AVFrame *frame;
 
 	for (size_t i = 0; i < config.countTracks; ++i) {
 		ResourceStream& rs = m_tracks[config.rtracks[config.tracks[i]]];
 		if (rs.stream->index != packet->stream_index)
 			continue;
 
-		mc = m_media->get(packet->stream_index, config.start);
-		if (mc) {
-			rs.cache.push_back(mc);
-			rs.temp.cells.insert(pstart, pend);
-			rs.temp.batched = rs.temp.cells.has(config.start, config.end);
-			return true;
-		}
+		// Despite already checking our local cache, another thread could create the needed cache
+		mc = m_media->get(packet->stream_index, pstart);
+		if (mc)
+			goto done;
 
-		int ret, index = packet->stream_index;
-		AVFrame *frame = av_frame_alloc();
+		index = packet->stream_index;
+		frame = av_frame_alloc();
 		do {
 			ret = avcodec_send_packet(m_tracks[index].context, packet);
 			ret = avcodec_receive_frame(m_tracks[index].context, frame);
@@ -220,8 +234,21 @@ bool Resource::renderPacket(ResourceScraperConfig& config, std::map<uint64_t, Me
 				mc->format = MC_AV_OTHER;
 		}
 
-		m_media->link(packet->stream_index, mc);
+		// Despite creation of packet, doesn't mean it wasn't created from another thread, grab that media cache if so
+		mc = m_media->link(packet->stream_index, mc);
+done:
+		rs.cache.push_back(mc);
+		rs.temp.cells.insert(pstart, pend);
+		rs.temp.batched = rs.temp.cells.has(config.start, config.end);
+		bank[i].push_back(mc);
+		av_packet_unref(packet);
 		return true;
 	}
+	// This means the packet did not belong to family of tracks
 	return false;
+}
+
+/* Time stamp for given stream index to rational in seconds, in reduced form */
+rational Resource::ts2q(int64_t pts, int index) {
+    return ~(rational(m_tracks[index].stream->time_base) * pts);
 }
