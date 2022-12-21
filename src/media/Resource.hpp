@@ -6,7 +6,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-#include "Media.hpp"
+#include "MediaBin.hpp"
 #include "../sys/domain.hpp"
 #include <map>
 
@@ -14,33 +14,32 @@ extern "C" {
 #define RESOURCE_PLAY_REVERSE 1
 
 enum PacketType {
-    PACKET_VISUAL,
-    PACKET_AUDIAL,
-    PACKET_UNKOWN = -1
+	PACKET_VISUAL,
+	PACKET_AUDIAL,
+	PACKET_UNKOWN = -1
 }; 
 
 struct ResourceStream {
 	ResourceStream();
-	ResourceStream(const ResourceStream& rs);
-    AVStream* stream;
-    AVCodecContext *context;
-    MediaBank cache;
-    struct {
-        bool batched; // For when to stop batch calling
-        domain cells; //For audio and video frame collection before finishing
-    } temp;
-    rational lstart, lend; // Last rendered packet timestamps;
+	AVStream* stream;
+	AVCodecContext *context;
+	MediaBank cache;
+	struct {
+		bool batched; // For when to stop batch calling
+		domain cells; //For audio and video frame collection before finishing
+	} temp;
+	rational lstart, lend; // Last rendered packet timestamps;
 };
 
 struct ResourceConfig {
-    uint64_t frame;
-    rational framesPerSecond;
-    uint32_t direction;
-    uint32_t seeked;
-    size_t countVideoTracks;
-    uint64_t *videoTracks;
-    size_t countAudioTracks;
-    uint64_t *audioTracks;
+	uint64_t frame;
+	rational framesPerSecond;
+	uint32_t direction;
+	uint32_t seeked;
+	size_t countVideoTracks;
+	uint64_t *videoTracks;
+	size_t countAudioTracks;
+	uint64_t *audioTracks;
 };
 
 /* For scraping and inserting cache */
@@ -52,16 +51,16 @@ struct ResourceScraperConfig {
 };
 
 struct ResourceOutput {
-    std::map<uint64_t, MediaBank> videoTracks;
-    std::map<uint64_t, MediaBank> audioTracks;
+	std::map<uint64_t, MediaBank> videoTracks;
+	std::map<uint64_t, MediaBank> audioTracks;
 };
 
 class Resource {
 public:
-    Resource(const std::string& name, MediaBin& bin);
-    virtual ~Resource();
+	Resource(const std::string& name, MediaBin& bin);
+	virtual ~Resource();
 
-    void read(const ResourceConfig& config, ResourceOutput& bank);
+	void read(const ResourceConfig& config, ResourceOutput& bank);
 
 	size_t numAudioTracks() { return m_atracks.size(); }
 	size_t numVideoTracks() { return m_vtracks.size(); }
@@ -69,19 +68,19 @@ public:
 private:
 	void scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank);
 	bool renderPacket(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank, AVPacket* packet);
-    rational ts2q(int64_t pts, int index);
-    void seek(int64_t frame, rational fps);
-    void batch(const ResourceConfig& config, ResourceOutput& bank);
+	rational ts2q(int64_t pts, int index);
+	void seek(int64_t frame, rational fps);
+	void batch(const ResourceConfig& config, ResourceOutput& bank);
 	bool batched();
 
-    AVFormatContext *m_context;
+	AVFormatContext *m_context;
 
-    std::vector<ResourceStream> m_tracks;
-    std::vector<int> m_vtracks; //Visual tracks
-    std::vector<int> m_atracks; //Audial tracks
-    std::vector<int> m_utracks; //Unknown tracks
+	std::vector<ResourceStream> m_tracks;
+	std::vector<int> m_vtracks; //Visual tracks
+	std::vector<int> m_atracks; //Audial tracks
+	std::vector<int> m_utracks; //Unknown tracks
 
-    Media *m_media;
+	Media *m_media;
 };
 
 #endif
