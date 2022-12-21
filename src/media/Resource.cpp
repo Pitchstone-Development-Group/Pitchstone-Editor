@@ -100,7 +100,7 @@ void Resource::read(const ResourceConfig& config, ResourceOutput& banks) {
 		 * So grabbing the frame in batches would end up needing to read may more than needed only to free it in the end
 		 * This is guarenteed to work for the mean time, but will need to improve once the application evolves
 		 */
-		if (config.seeked || config.direction == RESOURCE_PLAY_REVERSE)
+		if (config.seeked || config.direction == playReverse)
 			seek(config.frame, config.framesPerSecond);
 		batch(config, banks);
 	}
@@ -109,9 +109,9 @@ void Resource::read(const ResourceConfig& config, ResourceOutput& banks) {
 	for (ResourceStream& rs : m_tracks) {
 		for (size_t i = 0; i < rs.cache.size(); ++i) {
 			bool remove = false;
-			if (config.direction == RESOURCE_PLAY_FORWARD && rs.cache[i]->end <= start)
+			if (config.direction == playForward && rs.cache[i]->end <= start)
 				remove = true;
-			else if (config.direction == RESOURCE_PLAY_REVERSE && rs.cache[i]->start >= end)
+			else if (config.direction == playReverse && rs.cache[i]->start >= end)
 				remove = true;
 
 			if (remove)

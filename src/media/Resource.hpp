@@ -10,9 +10,6 @@ extern "C" {
 #include "../sys/domain.hpp"
 #include <map>
 
-#define RESOURCE_PLAY_FORWARD 0
-#define RESOURCE_PLAY_REVERSE 1
-
 enum PacketType {
 	PACKET_VISUAL,
 	PACKET_AUDIAL,
@@ -65,6 +62,7 @@ public:
 	size_t numAudioTracks() { return m_atracks.size(); }
 	size_t numVideoTracks() { return m_vtracks.size(); }
 
+	static const int playForward = 0, playReverse = 1;
 private:
 	void scrapeCache(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank);
 	bool renderPacket(ResourceScraperConfig& config, std::map<uint64_t, MediaBank>& bank, AVPacket* packet);
