@@ -1,20 +1,25 @@
 #include "domain.hpp"
 
 domain::domain() {
-
+    domains.clear();
 }
 
 domain::~domain() {
-
+    domains.clear();
 }
 
-bool intersects(std::pair<rational, rational> p, rational a, rational b);
-bool intersects(std::pair<rational, rational> p, rational a, rational b) {
-    if (p.second == a || p.first == b)
+bool domain::intersects(rational a1, rational b1, rational a2, rational b2) {
+    if (a2 >= a1 && b1 >= a2)
         return true;
-    if (a >= p.first && p.second >= a)
+    if (a1 >= a2 && b2 >= a1)
         return true;
-    if (p.first >= a && b >= p.first)
+    return false;
+}
+
+bool domain::overlaps(rational a1, rational b1, rational a2, rational b2) {
+    if (a1 <= a2 && a2 < b1)
+        return true;
+    if (a2 <= a1 && a2 < b1)
         return true;
     return false;
 }
@@ -39,11 +44,11 @@ void domain::insert(rational a, rational b) {
             return;
         }
         //Because we guarentee ourselves a sorted list, we only need to start merging from here
-        if (intersects(domains[i], a, b)) {
+        if (intersects(domains[i].first, domains[i].second, a, b)) {
             domains[i].first = min(domains[i].first, a);
             domains[i].second = max(domains[i].second, b);
             for (size_t j = i + 1; j < domains.size(); ++j) {
-                if (!intersects(domains[i], domains[j].first, domains[j].second))
+                if (!intersects(domains[i].first, domains[i].second, domains[j].first, domains[j].second))
                     break;
                 domains[i].first = min(domains[i].first, domains[j].first);
                 domains[i].second = max(domains[i].second, domains[j].second);
@@ -60,7 +65,7 @@ void domain::insert(rational a, rational b) {
 
 bool domain::has(rational a, rational b) {
     for (auto d : domains)
-        if (a <= d.first && d.second <= b)
+        if (d.first <= a && b <= d.second)
             return true;
     return false;
 }
