@@ -9,12 +9,12 @@ public:
 	Vulkan(bool validator = false);
 	virtual ~Vulkan();
 
-	bool validates() { return validation; }
-	VkInstance instance;
+	bool validates() { return m_validation; }
+	VkInstance m_instance;
 	std::vector<const char*> m_layers = { "VK_LAYER_KHRONOS_validation" };
 private:
 	VkDebugUtilsMessengerEXT debugMessenger;
-	bool validation;
+	bool m_validation;
 };
 
 #endif

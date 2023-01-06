@@ -25,11 +25,14 @@ L_FLAGS = $(INCLUDE) $(LIBS)
 
 all: cleantop root sys media vulkan build
 
-tmps:
+setup:
 	$(MKDIR) tmp$(S)
 	$(MKDIR) tmp$(S)sys
 	$(MKDIR) tmp$(S)media
 	$(MKDIR) tmp$(S)vulkan
+	$(MKDIR) tmp$(S)imgui
+	g++ src/imgui/*.cpp -c $(C_FLAGS) > error.txt 2>&1
+	$(MV) *.o tmp$(S)imgui
 
 root: src/*.cpp
 	g++ src/*.cpp  -c $(C_FLAGS) $(W_FLAGS) > error.txt 2>&1
@@ -48,11 +51,11 @@ vulkan: src/vulkan/*.cpp
 	$(MV) *.o tmp$(S)vulkan
 
 build:
-	g++ tmp/*.o tmp/sys/*.o tmp/media/*.o tmp/vulkan/*.o -o $(OUT) $(C_FLAGS) $(L_FLAGS) > error.txt 2>&1
+	g++ tmp/*.o tmp/sys/*.o tmp/imgui/*.o tmp/media/*.o tmp/vulkan/*.o -o $(OUT) $(C_FLAGS) $(L_FLAGS) > error.txt 2>&1
 
 cleantop:
 	$(RM) *.o
 
 clean:
 	$(RM) *.o
-	$(RM) tmp$(S)*.o tmp$(S)sys$(S)*.o tmp$(S)media$(S)*.o tmp$(S)vulkan$(S)*.o
+	$(RM) tmp$(S)*.o tmp$(S)sys$(S)*.o tmp$(S)media$(S)*.o tmp$(S)vulkan$(S)*.o tmp$(S)imgui$(S)*.o

@@ -5,3 +5,4 @@ bin/pitchstone.exe
 bin/pitchstone
 .vscode/
 error.txt
+bin/imgui.ini

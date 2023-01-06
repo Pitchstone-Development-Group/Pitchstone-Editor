@@ -1,10 +1,11 @@
 #include "Vulkan.hpp"
+#include "../imgui/imgui.h"
 #include <iostream>
 #include <GLFW/glfw3.h>
 #include <cstring>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	std::cerr << "m_validation layer: " << pCallbackData->pMessage << std::endl;
 	return VK_FALSE;
 }
 
@@ -16,15 +17,15 @@ static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&
 	info_c.pfnUserCallback = debugCallback;
 }
 
-static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
-	auto func =(PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-	return (func) ? func(instance, pCreateInfo, pAllocator, pDebugMessenger) : VK_ERROR_EXTENSION_NOT_PRESENT;
+static VkResult CreateDebugUtilsMessengerEXT(VkInstance m_instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	auto func =(PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
+	return (func) ? func(m_instance, pCreateInfo, pAllocator, pDebugMessenger) : VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
-static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+static void DestroyDebugUtilsMessengerEXT(VkInstance m_instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr)
-		func(instance, debugMessenger, pAllocator);
+		func(m_instance, debugMessenger, pAllocator);
 }
 
 static bool checkValidationLayerSupport(std::vector<const char*> validationLayers) {
@@ -67,14 +68,14 @@ static std::vector<const char*> getRequiredExtensions() {
 Vulkan::Vulkan(bool validator) {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	instance = VK_NULL_HANDLE;
+	m_instance = VK_NULL_HANDLE;
 	debugMessenger = VK_NULL_HANDLE;
-	validation = validator;
+	m_validation = validator;
 
 	std::cout << "Running Vulkan constructor" << std::endl;
 
-	if (validation && !checkValidationLayerSupport(m_layers))
-		throw std::runtime_error("validation layers requested, but not available!");
+	if (m_validation && !checkValidationLayerSupport(m_layers))
+		throw std::runtime_error("m_validation layers requested, but not available!");
 
 	VkApplicationInfo info_a{};
 	info_a.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -94,7 +95,7 @@ Vulkan::Vulkan(bool validator) {
 
 	VkDebugUtilsMessengerCreateInfoEXT info_d{};
 
-	if (validation) {
+	if (m_validation) {
 		info_c.enabledLayerCount = static_cast<uint32_t>(m_layers.size());
 		info_c.ppEnabledLayerNames = m_layers.data();
 		populateDebugMessengerCreateInfo(info_d);
@@ -104,23 +105,24 @@ Vulkan::Vulkan(bool validator) {
 		info_c.pNext = nullptr;
 	}
 
-	if (vkCreateInstance(&info_c, nullptr, &instance) != VK_SUCCESS)
-		throw std::runtime_error("failed to create instance!");
+	if (vkCreateInstance(&info_c, nullptr, &m_instance) != VK_SUCCESS)
+		throw std::runtime_error("failed to create m_instance!");
 
-	if (validation) {
+	if (m_validation) {
 		VkDebugUtilsMessengerCreateInfoEXT info_D;
 		populateDebugMessengerCreateInfo(info_D);
 
-		if (CreateDebugUtilsMessengerEXT(instance, &info_D, nullptr, &debugMessenger) != VK_SUCCESS)
+		if (CreateDebugUtilsMessengerEXT(m_instance, &info_D, nullptr, &debugMessenger) != VK_SUCCESS)
 			throw std::runtime_error("failed to set up debug messenger!");
 	}
+
 	std::cout << "Finished Vulkan constructor" << std::endl;
 }
 
 Vulkan::~Vulkan() {
 	std::cout << "Running Vulkan destructor" << std::endl;
-	DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-	vkDestroyInstance(instance, nullptr);
+	DestroyDebugUtilsMessengerEXT(m_instance, debugMessenger, nullptr);
+	vkDestroyInstance(m_instance, nullptr);
 	glfwTerminate();
 	std::cout << "Finished Vulkan destructor" << std::endl;
 }
