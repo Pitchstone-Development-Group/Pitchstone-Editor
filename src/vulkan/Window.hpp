@@ -2,8 +2,13 @@
 #define PITCHSTONE_VULKAN_WINDOW
 
 #include "Vulkan.hpp"
+#include "Device.hpp"
+#include "Queue.hpp"
 #include <GLFW/glfw3.h>
 #include <string>
+#include "../imgui/imgui.h"
+#include "../imgui/imgui_impl_glfw.h"
+#include "../imgui/imgui_impl_vulkan.h"
 
 class KeyboardMouse {
 public:
@@ -21,21 +26,13 @@ public:
 	Window(Vulkan *vulkan, int, int, std::string);
 	virtual ~Window();
 
+	void update();
+	void draw(ImDrawData* drawData);
+
 	void setSizeLimits(int minw, int minh, int maxw, int maxh) { glfwSetWindowSizeLimits(m_window, minw, minh, maxw, maxh); }
-	void attachDevice(VkPhysicalDevice physical, VkDevice device, int images);
-	void switchContext();
+	void setupImgui(Device* device, Queue* queue);
 
-	inline VkInstance getInstance() { return m_instance; }
 	inline VkSurfaceKHR getSurface() { return m_surface; }
-
-	static void callbackKey(GLFWwindow* window, int key, int scancode, int action, int mods);
-	static void callbackChar(GLFWwindow* window, unsigned int unicode);
-	static void callbackPos(GLFWwindow* window, double xpos, double ypos);
-	static void callbackEnter(GLFWwindow* window, int entered);
-	static void callbackButton(GLFWwindow* window, int button, int action, int mods);
-	static void callbackScroll(GLFWwindow* window, double xoffset, double yoffset);
-	
-	static void callbackResize(GLFWwindow* window, int width, int height);
 
 	KeyboardMouse m_keymouse;
 	bool m_closed = false, m_hidden = false, m_maximized = false;
@@ -43,9 +40,19 @@ public:
 	bool m_resized = false;
 
 	/* Needed to prevent cyclic dependency and for swapchain :) */
-	VkInstance m_instance;
+	Vulkan *m_vulkan;
+	Device *m_device;
+	Queue *m_queue;
+
 	GLFWwindow* m_window;
 	VkSurfaceKHR m_surface;
+	ImGui_ImplVulkanH_Window m_imgui;
+
+	VkDescriptorPool m_descriptorPool;
+	VkPipelineCache m_cache = nullptr;
+private:
+	void render(ImDrawData *drawData);
+	bool m_rebuild = false;
 };
 
 #endif

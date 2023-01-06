@@ -5,7 +5,7 @@ A free, multi-platform editor using Vulkan as its foundation
 ## Code Structure
 |  Directory | Explanation |
 |-------------|---------------|
-| src/ | Source code for the Pitchstone Editor, licensed under the [GPL v3.0 License](https://github.com/Pitchstone-Development-Group/Pitchstone-Editor/blob/main/LICENSE) |
+| src/ | Source code for the Pitchstone Editor, with expection of src/imgui/ folder, licensed under the [GPL v3.0 License](https://github.com/Pitchstone-Development-Group/Pitchstone-Editor/blob/main/LICENSE) |
 | include/ | Folder for libraries' header files (Both Linux and Windows) |
 | include/windows/ | Folder for libraries' header files (Windows Only) |
 | include/linux/ | Folder for libraries' header files (Linux Only) |
@@ -22,17 +22,20 @@ So far the current build uses Makefile to assemble the program, and will be movi
 1) Download and install the latest version of the [Vulkan SDK](https://vulkan.lunarg.com/sdk/home#windows).
 2) Download and install [MinGW-w64](https://github.com/brechtsanders/winlibs_mingw/releases/download/11.2.1-snapshot20211211-9.0.0-ucrt-r1/winlibs-x86_64-posix-seh-gcc-11.2.1-snapshot20211211-mingw-w64ucrt-9.0.0-r1.zip).
 3) Go to the root directory of the repository, the same directory the Makefile should be at.
-4) Run `mingw32-make tmps` to assemble the temporary directories (***Run this before all other commands***).
+4) Run `mingw32-make setup` to assemble the temporary directories (***Run this before all other commands***).
 5) Run `mingw32-make all` to build the entire application.
 
 If you only modified source files of a single directory, then you may run `mingw32-make media build` for example.
 
 ### Linux
 1) To install the needed dependencies, run:
-* Debain: `sudo apt-get install -y libvulkan-dev libglfw3-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev`
-2) Go to the root directory of the repository, the same directory the Makefile should be at.
-3) Run `make tmps` to assemble the temporary directories (***Run this before all other commands***).
-4) Run `make all` to build the entire application.
+* Debain/Ubuntu: `sudo apt-get install -y libvulkan-dev libglfw3-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev`
+2) To Install the Vulkan SDK, run:
+* Ubuntu: [Getting Started with the Ubuntu Vulkan SDK](https://vulkan.lunarg.com/doc/view/latest/linux/getting_started_ubuntu.html)
+* Tarball: [Getting Started with the Linux Tarball Vulkan SDK](https://vulkan.lunarg.com/doc/view/1.2.176.1/linux/getting_started.html)
+3) Go to the root directory of the repository, the same directory the Makefile should be at.
+4) Run `make setup` to assemble the temporary directories (***Run this before all other commands***).
+5) Run `make all` to build the entire application.
 
 If you only modified source files of a single directory, then you may run `make media build` for example.
 
@@ -57,3 +60,6 @@ FFPMEG and Libav are under the [GPL version 2 license](https://www.ffmpeg.org/le
 
 GLM is under [The Happy Bunny License](https://github.com/g-truc/glm/blob/master/copying.txt)
 * include/windows/glm/
+
+Dear ImGui is under the [MIT License](https://github.com/ocornut/imgui/blob/master/LICENSE.txt)
+* src/imgui
