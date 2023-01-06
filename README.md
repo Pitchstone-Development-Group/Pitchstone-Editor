@@ -5,7 +5,7 @@ A free, multi-platform editor using Vulkan as its foundation
 ## Code Structure
 |  Directory | Explanation |
 |-------------|---------------|
-| src/ | Source code for the Pitchstone Editor, licensed under the [GPL v3.0 License](https://github.com/Pitchstone-Development-Group/Pitchstone-Editor/blob/main/LICENSE) |
+| src/ | Source code for the Pitchstone Editor, with expection of src/imgui/ folder, licensed under the [GPL v3.0 License](https://github.com/Pitchstone-Development-Group/Pitchstone-Editor/blob/main/LICENSE) |
 | include/ | Folder for libraries' header files (Both Linux and Windows) |
 | include/windows/ | Folder for libraries' header files (Windows Only) |
 | include/linux/ | Folder for libraries' header files (Linux Only) |
