@@ -9,7 +9,7 @@ public:
 	Instance();
 	~Instance();
 
-	const VkInstance instance() { return m_instance; }
+	VkInstance instance() { return m_instance; }
 	const std::vector<std::string>& extensions() { return m_extensions; }
 private:
 	VkInstance m_instance;
