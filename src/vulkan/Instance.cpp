@@ -3,6 +3,10 @@
 #include <iostream>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData) {
+	(void) severity;
+	(void) type;
+	(void) userData;
+
 	std::cerr << "VULKAN VALIDATION LAYER: " << callbackData->pMessage << std::endl;
 	return VK_FALSE;
 }

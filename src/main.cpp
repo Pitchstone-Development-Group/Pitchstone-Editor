@@ -8,8 +8,10 @@
 
 using namespace std;
 
-int main(int argc, char* args[])
-{
+int main(int argc, char* argv[]) {
+	(void)argc;
+	(void)argv;
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	cout << "Hello CMake." << endl;
 	SDL_Quit();
