@@ -40,7 +40,9 @@ DeviceProperties::~DeviceProperties() {
 
 }
 
-Device::Device(Instance *instance) {
+Device::Device(Instance *instance, VkSurfaceKHR surface) {
+	(void) surface;
+
 	m_device = VK_NULL_HANDLE;
 	m_instance = instance->instance();
 	uint32_t count;
@@ -60,6 +62,8 @@ Device::Device(Instance *instance) {
 	info_que.queueCount = 1;
 	info_que.pQueuePriorities = priorities;
 
+	std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
 	VkDeviceCreateInfo info_dev{};
 	info_dev.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	info_dev.pNext = &m_properties.features_11;
@@ -68,11 +72,13 @@ Device::Device(Instance *instance) {
 	info_dev.pQueueCreateInfos = &info_que;
 	info_dev.enabledLayerCount = 0;
 	info_dev.ppEnabledLayerNames = VK_NULL_HANDLE;
-	info_dev.enabledExtensionCount = 0;
-	info_dev.ppEnabledExtensionNames = VK_NULL_HANDLE;
+	info_dev.enabledExtensionCount = (uint32_t)extensions.size();
+	info_dev.ppEnabledExtensionNames = extensions.data();
 	info_dev.pEnabledFeatures = &m_properties.features_10.features;
 
 	vkCreateDevice(m_physicals[m_physical], &info_dev, VK_NULL_HANDLE, &m_device);
+
+	vkGetDeviceQueue(m_device, 0, 0, &m_queue);
 }
 
 Device::~Device() {

@@ -3,9 +3,11 @@ A free, multi-platform editor using Vulkan as its foundation
 
 ## Libraries Used
 
-This software uses the Vulkan API, hosted outside the repo via the Vulkan SDK
+This software uses the Vulkan API, hosted outside the repo
 
-SDL2 is under the [zlib license](https://www.libsdl.org/license.php), hosted outside the repo via the Vulkan SDK
+SDL2 is under the [zlib license](https://www.libsdl.org/license.php), hosted outside the repo
+
+Dear ImGui is under the [MIT License](https://github.com/ocornut/imgui/blob/master/LICENSE.txt), stored in the include section of the repository
 
 ## Building Instructions
 

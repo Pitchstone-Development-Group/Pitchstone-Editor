@@ -29,7 +29,13 @@ public:
 
 class Device {
 public:
-	Device(Instance*);
+	Device(Instance*, VkSurfaceKHR);
+
+	VkQueue queue() { return m_queue; }
+
+	VkDevice device() { return m_device; }
+	VkPhysicalDevice physical() { return m_physicals[m_physical]; }
+
 	~Device();
 private:
 	std::vector<VkPhysicalDevice> m_physicals;
@@ -37,6 +43,7 @@ private:
 
 	DeviceProperties m_properties;
 
+	VkQueue m_queue;
 
 	VkDevice m_device;
 	VkInstance m_instance;

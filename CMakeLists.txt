@@ -54,6 +54,7 @@ IF (WIN32)
 ENDIF()
 
 target_include_directories(Pitchstone PRIVATE Vulkan::Headers)
+target_include_directories(Pitchstone PRIVATE include)
 
 target_link_libraries(Pitchstone PRIVATE Vulkan::Vulkan)
 target_link_libraries(Pitchstone PRIVATE SDL2main SDL2)
@@ -67,5 +68,13 @@ IF (WIN32)
 		file(COPY ${VULKAN_SDK_PATHS}/Bin/SDL2main.pdb DESTINATION ../bin/${PITCHSTONE_BUILD})
 	ENDIF()
 ENDIF()
+
+target_sources(Pitchstone PRIVATE include/imgui/imgui_demo.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui_draw.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui_impl_sdl2.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui_impl_vulkan.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui_tables.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui_widgets.cpp)
+target_sources(Pitchstone PRIVATE include/imgui/imgui.cpp)
 
 add_subdirectory(src)
