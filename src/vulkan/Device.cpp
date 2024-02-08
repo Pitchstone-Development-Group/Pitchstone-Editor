@@ -1,4 +1,6 @@
 #include "Device.hpp"
+#include "Queue.hpp"
+#include <iostream>
 
 DeviceProperties::DeviceProperties() {
 	properties_10 = {};
@@ -52,15 +54,27 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 
 	m_physical = 0;
 	
-	float priorities[1] = { 1.0F };
+	auto queueAssignments = Queue::assign(m_physicals[m_physical], surface);
 
-	VkDeviceQueueCreateInfo info_que{};
-	info_que.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	info_que.pNext = VK_NULL_HANDLE;
-	info_que.flags = 0;
-	info_que.queueFamilyIndex = 0;
-	info_que.queueCount = 1;
-	info_que.pQueuePriorities = priorities;
+	auto queueFamilies = Queue::allocation(queueAssignments);
+
+	std::vector<float> priorities(QUEUE_THREADS);
+	for (float& p : priorities) {
+		p = 1.0F;
+	}
+
+	std::vector<VkDeviceQueueCreateInfo> info_que(queueFamilies.size());
+	uint32_t index = 0;
+	for (auto& qf : queueFamilies) {
+		info_que[index].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		info_que[index].pNext = VK_NULL_HANDLE;
+		info_que[index].flags = 0;
+		info_que[index].queueFamilyIndex = qf.first;
+		info_que[index].queueCount = qf.second;
+		info_que[index].pQueuePriorities = priorities.data();
+		index++;
+	}
+	
 
 	std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -68,8 +82,8 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 	info_dev.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	info_dev.pNext = &m_properties.features_11;
 	info_dev.flags = 0;
-	info_dev.queueCreateInfoCount = 1;
-	info_dev.pQueueCreateInfos = &info_que;
+	info_dev.queueCreateInfoCount = (uint32_t)info_que.size();
+	info_dev.pQueueCreateInfos = info_que.data();
 	info_dev.enabledLayerCount = 0;
 	info_dev.ppEnabledLayerNames = VK_NULL_HANDLE;
 	info_dev.enabledExtensionCount = (uint32_t)extensions.size();
@@ -78,9 +92,39 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 
 	vkCreateDevice(m_physicals[m_physical], &info_dev, VK_NULL_HANDLE, &m_device);
 
-	vkGetDeviceQueue(m_device, 0, 0, &m_queue);
+	for (int i = 0; i < QUEUE_THREADS; ++i) {
+		m_queuesIndex[i] = QUEUE_THREADS;
+	}
+	int unique = 0;
+	for (int i = 0; i < QUEUE_THREADS; ++i) {
+		if (m_queuesIndex[i] != QUEUE_THREADS) {
+			continue;
+		}
+		bool alone = true;
+		for (int j = i + 1; j < QUEUE_THREADS; ++j) {
+			if (queueAssignments[i].first == queueAssignments[j].first && queueAssignments[i].second == queueAssignments[j].second) {
+				m_queuesIndex[j] = unique;
+
+				if (i == QUEUE_WINDOW_PRESENT && j == QUEUE_WINDOW_GRAPHICS) {
+					continue;
+				} else if (i == QUEUE_CONVERTOR_COMPUTE && j == QUEUE_CONVERTOR_TRANSFER) {
+					continue;
+				} else if (i == QUEUE_ENGINE_GRAPHICS && j == QUEUE_ENGINE_COMPUTE) {
+					continue;
+				}
+
+				alone = false;
+			}
+		}
+		m_queuesIndex[i] = unique;
+		m_queues.push_back(new Queue(m_device, queueAssignments[i].first, queueAssignments[i].second, alone));
+		unique++;
+	}
 }
 
 Device::~Device() {
+	for (Queue* queue : m_queues) {
+		delete queue;
+	}
 	vkDestroyDevice(m_device, VK_NULL_HANDLE);
 }

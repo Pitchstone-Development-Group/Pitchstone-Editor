@@ -28,7 +28,7 @@ private:
 	VkPipelineCache m_cache = VK_NULL_HANDLE;
 
 	Device *m_device;
-	VkQueue m_queue;
+	Queue *m_present, *m_graphics;
 
 	VkInstance m_instance;
 

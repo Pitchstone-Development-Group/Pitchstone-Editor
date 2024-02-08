@@ -47,7 +47,8 @@ void Window::draw() {
 
 void Window::setupImgui(Device *device) {
 	m_device = device;
-	m_queue = device->queue();
+	m_present = m_device->queue(QUEUE_WINDOW_PRESENT);
+	m_graphics = m_device->queue(QUEUE_WINDOW_GRAPHICS);
 
 	// Will need to tweak over time
 	uint32_t maxSizePerType = 1000;
@@ -82,7 +83,7 @@ void Window::setupImgui(Device *device) {
     m_imgui.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_device->physical(), m_imgui.Surface, wantedFormats.data(), (int)wantedFormats.size(), wantedColorSpace);
 	std::vector<VkPresentModeKHR> wantedPresentModes = { VK_PRESENT_MODE_FIFO_KHR };
 	m_imgui.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_device->physical(), m_imgui.Surface, wantedPresentModes.data(), (int)wantedPresentModes.size());
-	ImGui_ImplVulkanH_CreateOrResizeWindow(m_instance, m_device->physical(), m_device->device(), &m_imgui, 0, VK_NULL_HANDLE, width, height, 2);
+	ImGui_ImplVulkanH_CreateOrResizeWindow(m_instance, m_device->physical(), m_device->device(), &m_imgui, 0, VK_NULL_HANDLE, width, height, 3);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -97,12 +98,12 @@ void Window::setupImgui(Device *device) {
    	init_i.Instance = m_instance;
 	init_i.PhysicalDevice = m_device->physical();
 	init_i.Device = m_device->device();
-	init_i.QueueFamily = 0;
-	init_i.Queue = m_queue;
+	init_i.QueueFamily = m_present->family();
+	init_i.Queue = m_present->queue();
 	init_i.PipelineCache = m_cache;
 	init_i.DescriptorPool = m_descriptorPool;
 	init_i.Subpass = 0;
-	init_i.MinImageCount = 2;
+	init_i.MinImageCount = 3;
 	init_i.ImageCount = m_imgui.ImageCount;
 	init_i.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_i.Allocator = VK_NULL_HANDLE;
@@ -157,7 +158,10 @@ void Window::render(ImDrawData *drawData) {
 	info_s.pSignalSemaphores = &rendered;
 
 	vkEndCommandBuffer(fd->CommandBuffer);
-	vkQueueSubmit(m_queue, 1, &info_s, fd->Fence);
+
+	m_graphics->lock();
+	vkQueueSubmit(m_graphics->queue(), 1, &info_s, fd->Fence);
+	m_graphics->unlock();
 
 	VkPresentInfoKHR info_p = {};
 	info_p.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -166,7 +170,11 @@ void Window::render(ImDrawData *drawData) {
 	info_p.swapchainCount = 1;
 	info_p.pSwapchains = &m_imgui.Swapchain;
 	info_p.pImageIndices = &m_imgui.FrameIndex;
-	err = vkQueuePresentKHR(m_queue, &info_p);
+
+	m_present->lock();
+	err = vkQueuePresentKHR(m_present->queue(), &info_p);
+	m_present->unlock();
+
 	if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR) {
 		m_rebuild = true;
 		return;
