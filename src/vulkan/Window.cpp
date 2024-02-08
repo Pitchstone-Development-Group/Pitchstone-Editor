@@ -8,6 +8,10 @@ Window::Window(Instance *instance, int width, int height, const std::string& tit
 	m_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
 	SDL_Vulkan_CreateSurface(m_window, m_instance, &m_surface);
 	SDL_SetWindowData(m_window, "this", this);
+
+	SDL_Surface *icon = SDL_LoadBMP("icon.bmp");
+	SDL_SetWindowIcon(m_window, icon);
+	SDL_FreeSurface(icon);
 }
 
 Window::~Window() {
