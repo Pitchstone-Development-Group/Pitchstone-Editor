@@ -69,6 +69,8 @@ IF (WIN32)
 	ENDIF()
 ENDIF()
 
+file(COPY resources/ DESTINATION ../bin/${PITCHSTONE_BUILD})
+
 target_sources(Pitchstone PRIVATE include/imgui/imgui_demo.cpp)
 target_sources(Pitchstone PRIVATE include/imgui/imgui_draw.cpp)
 target_sources(Pitchstone PRIVATE include/imgui/imgui_impl_sdl2.cpp)
