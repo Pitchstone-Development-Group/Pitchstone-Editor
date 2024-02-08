@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Instance.hpp"
+#include "Queue.hpp"
 #include <unordered_map>
 
 class DeviceProperties{
@@ -31,7 +32,7 @@ class Device {
 public:
 	Device(Instance*, VkSurfaceKHR);
 
-	VkQueue queue() { return m_queue; }
+	Queue* queue(QueueThread thread) { return m_queues[m_queuesIndex[thread]]; }
 
 	VkDevice device() { return m_device; }
 	VkPhysicalDevice physical() { return m_physicals[m_physical]; }
@@ -43,7 +44,8 @@ private:
 
 	DeviceProperties m_properties;
 
-	VkQueue m_queue;
+	uint32_t m_queuesIndex[QUEUE_THREADS];
+	std::vector<Queue*> m_queues;
 
 	VkDevice m_device;
 	VkInstance m_instance;
