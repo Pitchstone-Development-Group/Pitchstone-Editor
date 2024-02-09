@@ -1,6 +1,7 @@
 #include "Device.hpp"
 #include "Queue.hpp"
 #include <iostream>
+#include <bit>
 
 DeviceProperties::DeviceProperties() {
 	properties_10 = {};
@@ -120,6 +121,8 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 		m_queues.push_back(new Queue(m_device, queueAssignments[i].first, queueAssignments[i].second, alone));
 		unique++;
 	}
+
+	vkGetPhysicalDeviceProperties2(m_physicals[m_physical], &m_properties.properties_10);
 }
 
 Device::~Device() {
@@ -127,4 +130,45 @@ Device::~Device() {
 		delete queue;
 	}
 	vkDestroyDevice(m_device, VK_NULL_HANDLE);
+}
+
+void Device::localSizes(uint32_t width, uint32_t height, uint32_t *sizeX, uint32_t *sizeY) {
+	uint32_t maxInv = m_properties.properties_10.properties.limits.maxComputeWorkGroupInvocations;
+	uint32_t maxX = m_properties.properties_10.properties.limits.maxComputeWorkGroupSize[0];
+	uint32_t maxY = m_properties.properties_10.properties.limits.maxComputeWorkGroupSize[1];
+
+	uint32_t minCost = ~0U;
+	uint32_t maxGroups = 0;
+
+	for (uint32_t y = 1; y <= maxY; ++y) {
+		uint32_t loopX = maxX / y;
+		for (uint32_t x = 1; x <= loopX; ++x) {
+			uint32_t groups = x * y;
+			// For UNASSIGNED-BestPractices-LocalWorkgroup-Multiple64 concerning AMD GPUs
+			if ((groups & 63) != 0 || groups > maxInv) {
+				continue;
+			}
+
+			uint32_t ingroups  = (width / x) * (height / y);
+			uint32_t outgroups = (((width - 1) / x) + 1) * (((height - 1) / y) + 1);
+			uint32_t cost = ingroups + ((outgroups - ingroups) << 1);
+
+			if (cost < minCost) {
+				*sizeX = x;
+				*sizeY = y;
+				minCost = cost;
+				maxGroups = groups;
+			} else if (cost == minCost) {
+				if (groups > maxGroups) {
+					*sizeX = x;
+					*sizeY = y;
+					maxGroups = groups;
+				}
+			}
+
+			if (maxGroups == maxInv && outgroups == ingroups) {
+				return;
+			}
+		}
+	}
 }

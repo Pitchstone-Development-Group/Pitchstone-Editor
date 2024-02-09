@@ -82,7 +82,7 @@ void Window::setupImgui(Device *device) {
 	int width, height;
 	SDL_GetWindowSize(m_window, &width, &height);
 	m_imgui.Surface = m_surface;
-	std::vector<VkFormat> wantedFormats = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8_SRGB, VK_FORMAT_R8G8B8_SRGB };
+	std::vector<VkFormat> wantedFormats = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
    	VkColorSpaceKHR wantedColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
     m_imgui.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_device->physical(), m_imgui.Surface, wantedFormats.data(), (int)wantedFormats.size(), wantedColorSpace);
 	std::vector<VkPresentModeKHR> wantedPresentModes = { VK_PRESENT_MODE_FIFO_KHR };
