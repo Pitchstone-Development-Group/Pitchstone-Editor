@@ -37,6 +37,8 @@ public:
 	VkDevice device() { return m_device; }
 	VkPhysicalDevice physical() { return m_physicals[m_physical]; }
 
+	void localSizes(uint32_t width, uint32_t height, uint32_t *sizeX, uint32_t *sizeY);
+
 	~Device();
 private:
 	std::vector<VkPhysicalDevice> m_physicals;
