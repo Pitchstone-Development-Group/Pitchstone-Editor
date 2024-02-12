@@ -16,6 +16,9 @@ public:
 
 	void setupImgui(Device *device);
 
+	static int event(void*, SDL_Event *event);
+	static bool update();
+
 private:
 
 	void render(ImDrawData *drawData);

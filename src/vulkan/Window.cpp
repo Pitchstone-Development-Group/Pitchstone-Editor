@@ -5,7 +5,7 @@
 
 Window::Window(Instance *instance, int width, int height, const std::string& title) {
 	m_instance = instance->instance();
-	m_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN);
+	m_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	SDL_Vulkan_CreateSurface(m_window, m_instance, &m_surface);
 	SDL_SetWindowData(m_window, "this", this);
 
@@ -25,6 +25,17 @@ Window::~Window() {
 }
 
 void Window::draw() {
+	if (m_rebuild) {
+		int width, height;
+		SDL_GetWindowSize(m_window, &width, &height);
+		if (width > 0 && height > 0) {
+			ImGui_ImplVulkan_SetMinImageCount(3);
+			ImGui_ImplVulkanH_CreateOrResizeWindow(m_instance, m_device->physical(), m_device->device(), &m_imgui, m_present->family(), nullptr, width, height, 3);
+			m_imgui.FrameIndex = 0;
+			m_rebuild = false;
+		}
+	}
+
 	ImVec4 clear_color = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
 	int width, height;
 	SDL_GetWindowSize(m_window, &width, &height);
@@ -186,3 +197,28 @@ void Window::render(ImDrawData *drawData) {
 	m_imgui.SemaphoreIndex = (m_imgui.SemaphoreIndex + 1) % m_imgui.SemaphoreCount;
 }
 
+/* Pay attention to this function and event handling as this may run outside the main thread! */
+int Window::event(void *userdata, SDL_Event *event) {
+	(void)userdata;
+	if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
+		Window *window = (Window*) SDL_GetWindowData(SDL_GetWindowFromID(event->window.windowID), "this");
+		ImGui_ImplVulkan_SetMinImageCount(3);
+		ImGui_ImplVulkanH_CreateOrResizeWindow(window->m_instance, window->m_device->physical(), window->m_device->device(), &window->m_imgui, window->m_present->family(), nullptr, event->window.data1, event->window.data2, 3);
+		window->m_imgui.FrameIndex = 0;
+		window->m_rebuild = false;
+		window->draw();
+		return 0;
+	}
+	return 1;
+}
+
+bool Window::update() {
+	SDL_Event event;
+	while(SDL_PollEvent(&event)) {
+		ImGui_ImplSDL2_ProcessEvent(&event);
+		if(event.type == SDL_QUIT) {
+			return true;
+		}
+	}
+	return false;
+}
