@@ -96,7 +96,7 @@ void Window::setupImgui(Device *device) {
 	std::vector<VkFormat> wantedFormats = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
    	VkColorSpaceKHR wantedColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
     m_imgui.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_device->physical(), m_imgui.Surface, wantedFormats.data(), (int)wantedFormats.size(), wantedColorSpace);
-	std::vector<VkPresentModeKHR> wantedPresentModes = { VK_PRESENT_MODE_FIFO_KHR };
+	std::vector<VkPresentModeKHR> wantedPresentModes = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_KHR };
 	m_imgui.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_device->physical(), m_imgui.Surface, wantedPresentModes.data(), (int)wantedPresentModes.size());
 	ImGui_ImplVulkanH_CreateOrResizeWindow(m_instance, m_device->physical(), m_device->device(), &m_imgui, 0, VK_NULL_HANDLE, width, height, 3);
 
