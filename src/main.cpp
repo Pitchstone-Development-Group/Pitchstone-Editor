@@ -16,7 +16,6 @@ int main(int argc, char* argv[]) {
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_SetEventFilter(Window::event, nullptr);
-	cout << "Hello CMake." << endl;
 
 	Instance* instance = new Instance();
 	Window* window = new Window(instance, 800, 600, "Pitchstone Editor");

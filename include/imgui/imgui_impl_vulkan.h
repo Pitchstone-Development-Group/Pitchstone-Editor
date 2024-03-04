@@ -77,6 +77,8 @@ struct ImGui_ImplVulkan_InitInfo
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
     VkDeviceSize                    MinAllocationSize;      // Minimum allocation size. Set to 1024*1024 to satisfy zealous best practices validation layer and waste a little memory.
+
+	PFN_vkSetDeviceMemoryPriorityEXT DeviceMemoryPriority;
 };
 
 // Called by user code

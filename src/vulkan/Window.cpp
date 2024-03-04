@@ -123,6 +123,8 @@ void Window::setupImgui(Device *device) {
 	init_i.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_i.Allocator = VK_NULL_HANDLE;
 	init_i.CheckVkResultFn = VK_NULL_HANDLE;
+	if (m_device->deviceMemoryPriority())
+		init_i.DeviceMemoryPriority = (PFN_vkSetDeviceMemoryPriorityEXT) vkGetInstanceProcAddr(m_instance, "vkSetDeviceMemoryPriorityEXT");
     ImGui_ImplVulkan_Init(&init_i, m_imgui.RenderPass);
 }
 
