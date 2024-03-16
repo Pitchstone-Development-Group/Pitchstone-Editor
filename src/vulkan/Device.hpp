@@ -36,6 +36,7 @@ public:
 	Device(Instance*, VkSurfaceKHR);
 	~Device();
 
+	VkInstance instance() { return m_instance; }
 	VkDevice device() { return m_device; }
 	VkPhysicalDevice physical() { return m_physicals[m_physical]; }
 	Queue* queue(QueueThread thread) { return m_queues[m_queuesIndex[thread]]; }

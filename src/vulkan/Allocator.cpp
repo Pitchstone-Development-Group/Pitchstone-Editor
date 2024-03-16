@@ -1,8 +1,10 @@
 #include "Allocator.hpp"
 #include <iostream>
+#include <bit>
 
-Allocator::Allocator(VkPhysicalDevice physical, VkDevice device) {
+Allocator::Allocator(VkPhysicalDevice physical, VkDevice device, PFN_vkSetDeviceMemoryPriorityEXT priority) {
 	m_device = device;
+	setPriority = priority;
 	vkGetPhysicalDeviceMemoryProperties(physical, &m_memory);
 
 	setBestMemoryTypeOptions(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -40,12 +42,16 @@ VkResult Allocator::allocate(VkDeviceSize size, VkDeviceMemory *memory, VkMemory
 		VkMemoryAllocateInfo info_alloc{};
 		info_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		info_alloc.memoryTypeIndex = type;
-		info_alloc.allocationSize = (size + 4095U) & ~(4095U);
+		info_alloc.allocationSize = (size + 4095Ui64) & ~(4095Ui64);
 		result = vkAllocateMemory(m_device, &info_alloc, nullptr, &ah->memory);
 		if (result != VK_SUCCESS) {
 			delete ah;
 			continue;
 		}
+		if (setPriority != VK_NULL_HANDLE) {
+			setPriority(m_device, ah->memory, 1.0F);
+		}
+		*memory = ah->memory;
 		m_mutex.unlock();
 		return VK_SUCCESS;
 	}
@@ -93,14 +99,14 @@ uint32_t Allocator::getAllocationID(VkBuffer buffer) {
 	for (auto ae : m_allocations)
 		if (ae.second != nullptr && ae.second->buffer == buffer)
 			return ae.first;
-	return ~0;
+	return ~0U;
 }
 
 uint32_t Allocator::getAllocationID(VkImage image) {
 	for (auto ae : m_allocations)
 		if (ae.second != nullptr && ae.second->image == image)
 			return ae.first;
-	return ~0;
+	return ~0U;
 }
 
 void* Allocator::map(VkBuffer buffer) {
@@ -111,7 +117,7 @@ void* Allocator::map(VkBuffer buffer) {
 	if (!findHeapAndEntry(buffer, nullptr, &hindex, &eindex))
 		return nullptr;
 	AllocatorHeap *heap = m_heaps[hindex];
-	AllocatorEntry *entry = m_heaps[hindex]->entries[eindex];
+	AllocatorEntry *entry = heap->entries[eindex];
 	m_mutex.unlock();
 	
 	if (!heap->alone)
@@ -129,18 +135,32 @@ void Allocator::unmap(VkBuffer buffer) {
 	AllocatorEntry *entry = m_heaps[hindex]->entries[eindex];
 	m_mutex.unlock();
 
-	if (m_heaps[hindex]->type & VK_MEMORY_PROPERTY_HOST_CACHED_BIT ) {
+	if (heap->type & VK_MEMORY_PROPERTY_HOST_CACHED_BIT ) {
 		VkMappedMemoryRange range{};
 		range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		range.pNext = nullptr;
-		range.memory = m_heaps[hindex]->memory;
-		range.size = m_heaps[hindex]->entries[eindex]->size;
-		range.offset = m_heaps[hindex]->entries[eindex]->offset;
+		range.memory = heap->memory;
+		range.size = entry->size;
+		range.offset = entry->offset;
 		vkFlushMappedMemoryRanges(m_device, 1, &range);
 	}
 
-	vkUnmapMemory(m_device, m_heaps[hindex]->memory);
-	m_heaps[hindex]->maplock.unlock();
+	vkUnmapMemory(m_device, heap->memory);
+	if (!heap->alone)
+		heap->maplock.unlock();
+}
+
+void Allocator::free(VkDeviceMemory memory) {
+	m_mutex.lock();
+	for (uint32_t hindex = 0; hindex < m_heaps.size(); ++hindex) {
+		if (m_heaps[hindex]->memory == memory) {
+			vkFreeMemory(m_device, m_heaps[hindex]->memory, nullptr);
+			delete m_heaps[hindex];
+			m_heaps.erase(m_heaps.begin() + hindex);
+			break;
+		}
+	}
+	m_mutex.unlock();
 }
 
 void Allocator::free(uint32_t allocationID) {
@@ -170,7 +190,7 @@ void Allocator::free(uint32_t allocationID) {
 
 static VkDeviceSize getBlockSize(VkMemoryRequirements& reqs, AllocatorSizingMode mode) {
 	static const VkDeviceSize maxBlockSizeMultiple = (1 << 27);
-	VkDeviceSize multiple = 1 << (31 - __builtin_clz(reqs.size));
+	VkDeviceSize multiple = 1ULL << (63 - (uint64_t)std::countl_zero(reqs.size));
 	switch (mode) {
 		case ALLOCATOR_COMPRESSION_MAXBLOCK:
 			return (reqs.size + maxBlockSizeMultiple - 1) & ~(maxBlockSizeMultiple - 1);
@@ -202,7 +222,7 @@ uint32_t Allocator::getFirstAvailableAllocationID() {
 	for (uint32_t id = 0; id < (uint32_t)(~0); ++id)
 		if (!m_allocations.contains(id) || m_allocations[id] == nullptr)
 			return id;
-	return ~0;
+	return ~0U;
 }
 
 static AllocatorEntry* findFirstAvailable(AllocatorHeap *heap, VkMemoryRequirements& reqs) {
@@ -275,6 +295,9 @@ VkResult Allocator::allocate(VkMemoryRequirements& reqs, VkMemoryPropertyFlags f
 				delete ah;
 				continue;
 			}
+			if (setPriority != VK_NULL_HANDLE) {
+				setPriority(m_device, ah->memory, 1.0F);
+			}
 		} else {
 			info_alloc.allocationSize = getBlockSize(reqs, ALLOCATOR_COMPRESSION_MAXBLOCK);
 			result = vkAllocateMemory(m_device, &info_alloc, nullptr, &ah->memory);
@@ -289,6 +312,9 @@ VkResult Allocator::allocate(VkMemoryRequirements& reqs, VkMemoryPropertyFlags f
 			if (result != VK_SUCCESS) {
 				delete ah;
 				continue;
+			}
+			if (setPriority != VK_NULL_HANDLE) {
+				setPriority(m_device, ah->memory, 1.0F);
 			}
 		}
 		ah->size = info_alloc.allocationSize;
@@ -312,14 +338,14 @@ void Allocator::setBestMemoryTypeOptions(VkMemoryPropertyFlags flags) {
 
 	for (uint32_t t = 0; t < m_memory.memoryTypeCount; ++t) {
 		consistencies[t] = flags & m_memory.memoryTypes[t].propertyFlags;
-		discrepencies[t] = __builtin_popcount(flags ^ m_memory.memoryTypes[t].propertyFlags);
+		discrepencies[t] = std::popcount(flags ^ m_memory.memoryTypes[t].propertyFlags);
 	}
 
 	bool found;
 	uint32_t minSift = 0, minDiscrepency;
 	do {
 		found = false;
-		minDiscrepency = ~0;
+		minDiscrepency = ~0U;
 		for (uint32_t t = 0; t < m_memory.memoryTypeCount; ++t) {
 			if (consistencies[t] == flags && discrepencies[t] >= minSift && discrepencies[t] < minDiscrepency) {
 				found = true;

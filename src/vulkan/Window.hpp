@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Instance.hpp"
 #include "Device.hpp"
+#include "ImGui_13.hpp"
+#include "Instance.hpp"
 #include <SDL2/SDL.h>
-#include <imgui/imgui_impl_vulkan.h>
+
 
 class Window {
 public:
@@ -13,6 +14,7 @@ public:
 	VkSurfaceKHR surface() { return m_surface; }
 
 	void draw();
+	void present() { present(false); }
 
 	void setupImgui(Device *device);
 
@@ -20,12 +22,11 @@ public:
 	static bool update();
 
 private:
-
-	void render(ImDrawData *drawData);
+	void present(bool resize);
 
 	SDL_Window *m_window;
 	VkSurfaceKHR m_surface;
-	ImGui_ImplVulkanH_Window m_imgui;
+	ImGui_13 *m_imgui;
 	
 	VkDescriptorPool m_descriptorPool;
 	VkPipelineCache m_cache = VK_NULL_HANDLE;

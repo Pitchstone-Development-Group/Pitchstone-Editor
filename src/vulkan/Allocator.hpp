@@ -29,7 +29,7 @@ struct AllocatorHeap {
 
 class Allocator {
 public:
-	Allocator(VkPhysicalDevice physical, VkDevice device);
+	Allocator(VkPhysicalDevice physical, VkDevice device, PFN_vkSetDeviceMemoryPriorityEXT priority);
 	~Allocator();
 
 	VkResult allocate(VkDeviceSize size, VkDeviceMemory *memory, VkMemoryPropertyFlags flags);
@@ -50,6 +50,8 @@ private:
 	VkResult allocate(VkMemoryRequirements& reqs, VkMemoryPropertyFlags flags, bool alone, AllocatorHeap **heap, AllocatorEntry **entry);
 	void setBestMemoryTypeOptions(VkMemoryPropertyFlags flags);
 
+	PFN_vkSetDeviceMemoryPriorityEXT setPriority;
+	
 	VkPhysicalDeviceMemoryProperties m_memory;
 	VkDevice m_device;
 	std::map<uint32_t, AllocatorEntry*> m_allocations;

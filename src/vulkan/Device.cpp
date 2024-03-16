@@ -2,6 +2,7 @@
 #include "Queue.hpp"
 #include <iostream>
 #include <bit>
+#include <cstring>
 
 DeviceProperties::DeviceProperties() {
 	properties_10 = {};
@@ -118,7 +119,6 @@ static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals
 			}
 		}
 
-		// For UNASSIGNED-BestPractices-vkCreateDevice-physical-device-features-not-retrieved(WARN / SPEC)
 		VkPhysicalDeviceFeatures features;
 		vkGetPhysicalDeviceFeatures(physicals[p], &features);
 	}
@@ -175,11 +175,14 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 		}
 	}
 
+	m_properties.features_12.timelineSemaphore = VK_TRUE;
 	m_properties.features_13.dynamicRendering = VK_TRUE;
+	m_properties.features_13.synchronization2 = VK_TRUE;
 
 	VkDeviceCreateInfo info_dev{};
 	info_dev.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	info_dev.pNext = &m_properties.features_11;
+
 	info_dev.flags = 0;
 	info_dev.queueCreateInfoCount = (uint32_t)info_que.size();
 	info_dev.pQueueCreateInfos = info_que.data();
@@ -204,9 +207,8 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 			if (queueAssignments[i].first == queueAssignments[j].first && queueAssignments[i].second == queueAssignments[j].second) {
 				m_queuesIndex[j] = unique;
 
-				if (i == QUEUE_WINDOW_PRESENT && j == QUEUE_WINDOW_GRAPHICS) {
-					continue;
-				} else if (i == QUEUE_CONVERTOR_COMPUTE && j == QUEUE_CONVERTOR_TRANSFER) {
+				/* QUEUE_WINDOW_GRAPHICS and QUEUE_WINDOW_PRESENT, even if one VkQueue, is shared between two threads */
+				if (i == QUEUE_CONVERTOR_COMPUTE && j == QUEUE_CONVERTOR_TRANSFER) {
 					continue;
 				} else if (i == QUEUE_ENGINE_GRAPHICS && j == QUEUE_ENGINE_COMPUTE) {
 					continue;
@@ -221,12 +223,16 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 	}
 
 	vkGetPhysicalDeviceProperties2(m_physicals[m_physical], &m_properties.properties_10);
+
+	PFN_vkSetDeviceMemoryPriorityEXT priority = m_deviceMemoryPriority ? (PFN_vkSetDeviceMemoryPriorityEXT) vkGetInstanceProcAddr(m_instance, "vkSetDeviceMemoryPriorityEXT") : VK_NULL_HANDLE;
+	m_allocator = new Allocator(m_physicals[m_physical], m_device, priority);
 }
 
 Device::~Device() {
 	for (Queue* queue : m_queues) {
 		delete queue;
 	}
+	delete m_allocator;
 	vkDestroyDevice(m_device, VK_NULL_HANDLE);
 }
 
@@ -309,12 +315,8 @@ void Device::unmap(VkBuffer buffer) {
 	m_allocator->unmap(buffer);
 }
 
-void Device::destroy(VkDeviceMemory memory) {
-
-}
-
-void Device::destroy(VkDeviceMemory memory) {
-	m_allocator->free(memory);
+void Device::destroy(VkDeviceMemory heap) {
+	m_allocator->free(heap);
 }
 
 void Device::destroy(VkBuffer buffer) {
