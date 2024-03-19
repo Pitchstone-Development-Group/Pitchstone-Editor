@@ -1,7 +1,7 @@
 #include "Image.hpp"
 #include <iostream>
 
-Image::Image(Device *device, uint32_t width, uint32_t height, VkFormat format) {
+Image::Image(Device *device, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage) {
 	m_device = device;
 	m_format = format;
 	m_width = width, m_height = height;
@@ -12,13 +12,14 @@ Image::Image(Device *device, uint32_t width, uint32_t height, VkFormat format) {
 	info_img.flags = 0;
 	info_img.format = format;
 	info_img.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	info_img.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info_img.imageType = VK_IMAGE_TYPE_2D;
 	info_img.mipLevels = 1;
 	info_img.arrayLayers = 1;
 	info_img.samples = VK_SAMPLE_COUNT_1_BIT;
 	info_img.extent = {width, height, 1};
 	info_img.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	info_img.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	info_img.usage = usage;
 
 	m_device->create(&info_img, &m_image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
 

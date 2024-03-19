@@ -4,6 +4,6 @@
 
 class ComputeShader : public Shader {
 public:
-	ComputeShader(Device *device, std::string shaderName);
+	ComputeShader(Device *device, std::string shaderName, uint32_t pcsize);
 	~ComputeShader();
 };

@@ -4,7 +4,7 @@
 
 class Image {
 public:
-	Image(Device *device, uint32_t width, uint32_t height, VkFormat format);
+	Image(Device *device, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	~Image();
 
 	VkImage image() { return m_image; }

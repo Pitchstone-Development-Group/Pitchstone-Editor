@@ -2,16 +2,8 @@
 
 #include "ComputeShader.hpp"
 
-ComputeShader::ComputeShader(Device *device, std::string shaderName) {
-	m_device = device;
-
-	auto code = loadShaderFile(shaderName + ".comp");
-	VkShaderModuleCreateInfo info_module{};
-	info_module.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	info_module.pCode = code.data();
-	info_module.codeSize = (uint32_t)(code.size() << 2);
-	VkShaderModule shader;
-	vkCreateShaderModule(m_device->device(), &info_module, VK_NULL_HANDLE, &shader);
+ComputeShader::ComputeShader(Device *device, std::string shaderName, uint32_t pcsize) : Shader(device, pcsize) {
+	VkShaderModule shader = loadShaderFile(shaderName + ".comp.spv");
 
 	VkDescriptorSetLayoutBinding bindings[3];
 	for (int i = 0; i < 3; ++i) {
@@ -19,7 +11,8 @@ ComputeShader::ComputeShader(Device *device, std::string shaderName) {
 		bindings[i].descriptorCount = 1;
 		bindings[i].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 	}
-	bindings[0].descriptorType = bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
 	VkDescriptorSetLayoutCreateInfo info_dsl{};
@@ -28,10 +21,17 @@ ComputeShader::ComputeShader(Device *device, std::string shaderName) {
 	info_dsl.pBindings = bindings;
 	vkCreateDescriptorSetLayout(m_device->device(), &info_dsl, VK_NULL_HANDLE, &m_dslayout);
 
+	VkPushConstantRange pcrange{};
+	pcrange.offset = 0;
+	pcrange.size = m_pcsize;
+	pcrange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
 	VkPipelineLayoutCreateInfo info_plc{};
 	info_plc.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	info_plc.setLayoutCount = 1;
 	info_plc.pSetLayouts = &m_dslayout;
+	info_plc.pushConstantRangeCount = 1;
+	info_plc.pPushConstantRanges = &pcrange;
 	vkCreatePipelineLayout(m_device->device(), &info_plc, VK_NULL_HANDLE, &m_pllayout);
 
 	VkComputePipelineCreateInfo info_cpc{};
@@ -46,7 +46,5 @@ ComputeShader::ComputeShader(Device *device, std::string shaderName) {
 }
 
 ComputeShader::~ComputeShader() {
-	vkDestroyPipeline(m_device->device(), m_pipeline, VK_NULL_HANDLE);
-	vkDestroyPipelineLayout(m_device->device(), m_pllayout, VK_NULL_HANDLE);
-	vkDestroyDescriptorSetLayout(m_device->device(), m_dslayout, VK_NULL_HANDLE);
+
 }

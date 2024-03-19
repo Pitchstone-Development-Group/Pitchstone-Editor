@@ -44,7 +44,7 @@ DeviceProperties::~DeviceProperties() {
 
 }
 
-static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals, VkSurfaceKHR surface) {
+static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals) {
 	VkPhysicalDeviceType preferredTypes[5] = { VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU, VK_PHYSICAL_DEVICE_TYPE_OTHER};
 	uint32_t bestType = 4;
 
@@ -73,7 +73,7 @@ static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals
 			continue;
 		}
 
-		bool foundGraphics = false, foundCompute = false, foundPresent = false;
+		bool foundGraphics = false, foundCompute = false;
 		uint32_t numQueues;
 		vkGetPhysicalDeviceQueueFamilyProperties(physicals[p], &numQueues, VK_NULL_HANDLE);
 		std::vector<VkQueueFamilyProperties> queues(numQueues);
@@ -85,13 +85,8 @@ static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals
 			if (queues[q].queueFlags & VK_QUEUE_COMPUTE_BIT) {
 				foundCompute = true;
 			}
-			VkBool32 present;
-			(void)vkGetPhysicalDeviceSurfaceSupportKHR(physicals[p], q, surface, &present);
-			if (present == VK_TRUE) {
-				foundPresent = true;
-			}
 		}
-		if (!foundGraphics || !foundCompute || !foundPresent) {
+		if (!foundGraphics || !foundCompute) {
 			continue;
 		}
 
@@ -126,9 +121,7 @@ static uint32_t selectBestPhysicalDevice(std::vector<VkPhysicalDevice> physicals
 	return bestIndex;
 }
 
-Device::Device(Instance *instance, VkSurfaceKHR surface) {
-	(void) surface;
-
+Device::Device(Instance *instance) {
 	m_device = VK_NULL_HANDLE;
 	m_instance = instance->instance();
 	uint32_t count;
@@ -136,9 +129,9 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 	m_physicals.resize(count);
 	vkEnumeratePhysicalDevices(m_instance, &count, m_physicals.data());
 
-	m_physical = selectBestPhysicalDevice(m_physicals, surface);
+	m_physical = selectBestPhysicalDevice(m_physicals);
 	
-	auto queueAssignments = Queue::assign(m_physicals[m_physical], surface);
+	auto queueAssignments = Queue::assign(m_physicals[m_physical]);
 
 	auto queueFamilies = Queue::allocation(queueAssignments);
 
@@ -160,7 +153,7 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 	}
 	
 
-	std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	std::vector<const char*> extensions;
 
 	m_deviceMemoryPriority = false;
 	vkEnumerateDeviceExtensionProperties(m_physicals[m_physical], VK_NULL_HANDLE, &count, VK_NULL_HANDLE);
@@ -207,7 +200,6 @@ Device::Device(Instance *instance, VkSurfaceKHR surface) {
 			if (queueAssignments[i].first == queueAssignments[j].first && queueAssignments[i].second == queueAssignments[j].second) {
 				m_queuesIndex[j] = unique;
 
-				/* QUEUE_WINDOW_GRAPHICS and QUEUE_WINDOW_PRESENT, even if one VkQueue, is shared between two threads */
 				if (i == QUEUE_CONVERTOR_COMPUTE && j == QUEUE_CONVERTOR_TRANSFER) {
 					continue;
 				} else if (i == QUEUE_ENGINE_GRAPHICS && j == QUEUE_ENGINE_COMPUTE) {
@@ -252,7 +244,7 @@ void Device::localSizes(uint32_t width, uint32_t height, uint32_t *sizeX, uint32
 				uint32_t groups = x * y;
 				uint32_t ingroups  = (width / x) * (height / y);
 				uint32_t outgroups = (((width - 1) / x) + 1) * (((height - 1) / y) + 1);
-				uint32_t cost = ingroups + ((outgroups - ingroups) << 1);
+				uint32_t cost = ingroups + ((outgroups - ingroups) << 2);
 
 				if (cost < minCost) {
 					*sizeX = x;

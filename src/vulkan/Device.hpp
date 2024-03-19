@@ -33,7 +33,7 @@ public:
 
 class Device {
 public:
-	Device(Instance*, VkSurfaceKHR);
+	Device(Instance*);
 	~Device();
 
 	VkInstance instance() { return m_instance; }
