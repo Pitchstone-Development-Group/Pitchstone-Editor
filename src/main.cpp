@@ -1,31 +1,27 @@
 ﻿// Pitchstone-Editor.cpp : Defines the entry point for the application.
 //
-
-#include <iostream>
 #include <SDL2/SDL.h>
+#include <iostream>
 #include "vulkan/Instance.hpp"
 #include "vulkan/Window.hpp"
 #include "vulkan/Device.hpp"
-#include <imgui/imgui_impl_sdl2.h>
-
-using namespace std;
+#include "vulkan/Image.hpp"
 
 int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
+#ifdef SDL_HINT_IME_SHOW_UI
+    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+#endif
 	SDL_SetEventFilter(Window::event, nullptr);
-	cout << "Hello CMake." << endl;
 
 	Instance* instance = new Instance();
-	Window* window = new Window(instance, 800, 600, "Pitchstone Editor");
-	Device* device = new Device(instance, window->surface());
+	Device* device = new Device(instance);
+	Window* window = new Window(800, 600, "Pitchstone Editor");
 
-	window->setupImgui(device);
-
-    while(!Window::update()) {
-		Window::update();
+	while (Window::update() == false) {
 		window->draw();
 	}
 

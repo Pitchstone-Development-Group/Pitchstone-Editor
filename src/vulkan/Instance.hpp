@@ -13,6 +13,5 @@ public:
 	const std::vector<std::string>& extensions() { return m_extensions; }
 private:
 	VkInstance m_instance;
-	VkDebugUtilsMessengerEXT m_debugger;
 	std::vector<std::string> m_extensions;
 };
