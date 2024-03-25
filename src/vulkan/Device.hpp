@@ -38,6 +38,7 @@ public:
 
 	VkInstance instance() { return m_instance; }
 	VkDevice device() { return m_device; }
+	const DeviceProperties& properties() { return m_properties; }; 
 	VkPhysicalDevice physical() { return m_physicals[m_physical]; }
 	Queue* queue(QueueThread thread) { return m_queues[m_queuesIndex[thread]]; }
 	/* TODO: Create more rigurous dependency system to render this function obsolete */

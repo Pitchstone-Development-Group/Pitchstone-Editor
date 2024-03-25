@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
 	Instance* instance = new Instance();
 	Device* device = new Device(instance);
-	Window* window = new Window(800, 600, "Pitchstone Editor");
+	Window* window = new Window(device, 800, 600, "Pitchstone Editor");
 
 	while (Window::update() == false) {
 		window->draw();

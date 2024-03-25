@@ -59,6 +59,10 @@ target_include_directories(Pitchstone PRIVATE include)
 target_link_libraries(Pitchstone PRIVATE Vulkan::Vulkan)
 target_link_libraries(Pitchstone PRIVATE SDL2main SDL2)
 
+IF (WIN32)
+	target_link_libraries(Pitchstone PRIVATE ole32 comctl32 uuid userenv dwmapi)
+ENDIF()
+
 # Mainly for copying the DLLs and their PDBs in debug
 IF (WIN32)
 	cmake_path(GET Vulkan_INCLUDE_DIRS PARENT_PATH VULKAN_SDK_PATHS)

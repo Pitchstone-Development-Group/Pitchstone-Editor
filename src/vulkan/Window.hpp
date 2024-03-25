@@ -1,11 +1,13 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include "Device.hpp"
+#include "../gui/MainGUI.hpp"
 #include <string>
 
 class Window {
 public:
-	Window(int width, int height, const std::string& title);
+	Window(Device *device, int width, int height, const std::string& title);
 	~Window();
 
 	void draw();
@@ -16,4 +18,6 @@ public:
 private:
 	SDL_Window *m_window;
 	SDL_Renderer *m_renderer;
+	MainGUI *m_gui;
+	Device *m_device;
 };

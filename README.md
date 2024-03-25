@@ -9,6 +9,8 @@ SDL2 is under the [zlib license](https://www.libsdl.org/license.php), hosted out
 
 Dear ImGui is under the [MIT License](https://github.com/ocornut/imgui/blob/master/LICENSE.txt), stored in the include section of the repository
 
+STB is under the [MIT License](https://github.com/nothings/stb/blob/master/LICENSE), stored in the include section of the repository
+
 ## Building Instructions
 
 ### Windows
